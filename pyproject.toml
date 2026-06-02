@@ -1,0 +1,28 @@
+[project]
+name = "spacedig"
+version = "0.1.0"
+description = "Scan disk locations and report what's eating your space, by diffing compact snapshots over time."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [{ name = "spacedig" }]
+keywords = ["disk", "usage", "snapshot", "diff", "windows", "cli"]
+# Core uses only the standard library, so installation is fast and dependency-free.
+dependencies = []
+
+[project.scripts]
+spacedig = "spacedig.cli:main"
+
+[project.optional-dependencies]
+dev = ["pytest>=7"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/spacedig"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
