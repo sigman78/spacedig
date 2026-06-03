@@ -112,6 +112,7 @@ spacedig scan D:\Projects C:\Users\me\Downloads
 - `--min-bytes 10MB` — hide changes smaller than this.
 - `--no-lists` — show only the tree map.
 - `--keep 20` — prune to the newest 20 snapshots right after scanning.
+- `--dedupe-hardlinks` — count hard-linked files once (slower; see *Links* below).
 - `--quiet` / `--log <file>` — for scheduled runs (see below).
 
 Run `spacedig <command> --help` for the full list.
@@ -154,8 +155,26 @@ A scan walks each root **bottom-up** and records, for every directory, its
 *recursive* size and file count — that's what answers "which folder is eating
 space" without storing an entry per file. Individual files are only recorded
 when they exceed `--threshold` (default 50 MiB), surfacing the few giant files
-that matter while keeping snapshots tiny. Symlinks/junctions are not followed,
-so nothing is double-counted.
+that matter while keeping snapshots tiny.
+
+### Links (symlinks, junctions, hard links)
+
+To avoid counting one physical file more than once, spacedig handles Windows
+link types deliberately:
+
+- **Symbolic links** and **directory junctions** (any reparse point) are **not
+  followed**. This is detected via the reparse attribute bit, so directory
+  *junctions* — which `os.walk` would otherwise descend into — are correctly
+  skipped, along with the targets of symlinks. This also prevents infinite
+  loops from cyclic links. The link itself occupies negligible space and is
+  not counted.
+- **Hard links** (multiple names for one physical file) are, by default,
+  counted under **each** name. Detecting them reliably on Windows requires a
+  full `stat()` (an open) of every file — too costly for the tool's main job of
+  sweeping large disks — so it is opt-in. Pass **`--dedupe-hardlinks`** to count
+  hard-linked bytes only once (matching `du`); both names are still reflected in
+  the file count. For most directories (where hard links are rare) the default
+  is both fast and accurate.
 
 ### Compact representation
 
@@ -192,8 +211,8 @@ uv run pytest
 ```
 
 The suite covers snapshot round-tripping (including pathological filenames and
-compression), scanner size aggregation, diff classification, history keying,
-pruning, and report rendering.
+compression), scanner size aggregation, link handling (symlinks, junctions, and
+hard links), diff classification, history keying, pruning, and report rendering.
 
 ---
 

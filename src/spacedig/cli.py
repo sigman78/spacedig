@@ -88,6 +88,7 @@ def cmd_scan(args: argparse.Namespace) -> int:
         threshold=args.threshold,
         now=_now(),
         on_error=lambda exc: errors.append(str(exc)),
+        dedupe_hardlinks=args.dedupe_hardlinks,
     )
     handle = store.save(snap)
 
@@ -304,6 +305,9 @@ def build_parser() -> argparse.ArgumentParser:
     sp.add_argument("--threshold", type=parse_size, default=DEFAULT_THRESHOLD,
                     help="record individual files at least this big "
                          "(default 50MB)")
+    sp.add_argument("--dedupe-hardlinks", action="store_true",
+                    help="count hard-linked files once (slower: needs a full "
+                         "stat per file). Off by default.")
     sp.add_argument("--no-diff", action="store_true",
                     help="just save a snapshot, don't show a diff")
     sp.add_argument("--keep", type=int, default=None,
